@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+           id="com.syncostyle.cordova.betteraudio.BetterAudio"
+      version="0.0.1">
+
+    <name>Better Audio</name>
+    <description>Better Audio Plugin</description>
+    <license>Apache 2.0</license>
+    <keywords>audio,duck,android</keywords>
+    <repo>none</repo>
+
+    <author>Gearóid Moroney</author>
+
+    <js-module src="www/betterAudio.js" name="BetterAudio">
+        <clobbers target="plugins.betteraudio" />
+    </js-module>
+
+    <!-- android -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="BetterAudio">
+                <param name="android-package" value="com.syncostyle.cordova.betteraudio.BetterAudio"/>
+            </feature>
+        </config-file>
+
+        <source-file src="src/android/BetterAudio.java" target-dir="src/com/syncostyle/cordova/betteraudio" />
+    </platform>
+
+</plugin>
