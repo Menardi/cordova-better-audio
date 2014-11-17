@@ -1,74 +1,74 @@
-/*
- * Author: Gearoid Moroney (gearoid@syncostyle.com)
- */
-
 package com.syncostyle.cordova.betteraudio;
 
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.CordovaResourceApi;
-import org.json.JSONArray;
-import org.json.JSONException;
-
-import com.syncostyle.c25k.R;
-
+import android.app.Activity;
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
-import android.content.res.Resources;
+import android.media.MediaPlayer.OnErrorListener;
+import android.media.MediaPlayer.OnPreparedListener;
 import android.util.Log;
-import android.net.Uri;
+import java.util.concurrent.ExecutorService;
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaInterface;
+import org.apache.cordova.CordovaPlugin;
+import org.json.JSONArray;
+import org.json.JSONException;
 
 public class BetterAudio extends CordovaPlugin {
+	private Context context;
 
-	/**
-	 * 	Executes the request and returns PluginResult
-     *
-     * 	@param action		Action to execute
-     * 	@param data			JSONArray of arguments to the plugin
-     *  @param callbackContext	The callback context used when calling back into JavaScript.
-     *
-     *  @return				A PluginRequest object with a status
-     * */
-    @Override
-    public boolean execute(String action, JSONArray data, CallbackContext callbackContext) {
-		context = this.cordova.getActivity().getBaseContext();
+	public boolean execute(String action, JSONArray data, final CallbackContext callbackContext) throws JSONException {
+		this.context = this.cordova.getActivity().getBaseContext();
 
-    	if(action.equals("play")) {
-    		String type;
-			try {
-				CordovaResourceApi resourceApi = webView.getResourceApi();
-				type = data.getString(0);
-				Log.d("BetterAudio", "Type is " + type);
+		if (action.equals("play")) {
+			final String uri = data.getString(0);
 
-	    		Uri audioUri = resourceApi.remapUri(Uri.parse("file:///android_asset/www/audio/" + type + ".ogg"));
-	    		Log.d("BetterAudio", "Uri is " + audioUri.toString());
+			this.cordova.getThreadPool().execute(new Runnable() {
+				public void run() {
+					Log.v("BetterAudio", "Uri is " + uri);
 
-				// Attempt to get audio focus
-				AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-				am.requestAudioFocus(null, AudioManager.STREAM_NOTIFICATION, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK);
+					MediaPlayer mp = new MediaPlayer();
 
-				// Play the notification anyway, regardless of focus
-				MediaPlayer mp = MediaPlayer.create(context, audioUri);
-				mp.start();
+					mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+						public void onPrepared(MediaPlayer m) {
+							AudioManager am = (AudioManager)BetterAudio.this.context.getSystemService("audio");
+							am.requestAudioFocus(null, 5, 3);
+							m.start();
+						}
+					});
 
-				// Set the completion listener
-				mp.setOnCompletionListener(new OnCompletionListener() {
-					public void onCompletion(MediaPlayer m) {
-						AudioManager a = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-						a.abandonAudioFocus(null);
-						m.release();
+					mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+						public void onCompletion(MediaPlayer m) {
+							AudioManager a = (AudioManager)BetterAudio.this.context.getSystemService("audio");
+							a.abandonAudioFocus(null);
+							m.release();
+						}
+					});
+
+					mp.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+						public boolean onError(MediaPlayer m, int errorCode, int more) {
+							m.stop();
+							AudioManager a = (AudioManager)BetterAudio.this.context.getSystemService("audio");
+							a.abandonAudioFocus(null);
+							Log.v("BetterAudio", "Uh oh: " + errorCode + " / " + more);
+							return false;
+						}
+					});
+
+					AssetFileDescriptor fd = null;
+					try {
+						fd = BetterAudio.this.cordova.getActivity().getAssets().openFd(uri);
+						mp.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+						mp.prepare();
+					} catch (Exception e) {
+						callbackContext.error(e.getLocalizedMessage());
 					}
-				});
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return false;
-			}
+				}
+			});
 		}
 		return true;
 	}
-
-	private Context context;
 }
