@@ -35,7 +35,7 @@ public class BetterAudio extends CordovaPlugin {
 					mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
 						public void onPrepared(MediaPlayer m) {
 							AudioManager am = (AudioManager)BetterAudio.this.context.getSystemService("audio");
-							am.requestAudioFocus(null, 5, 3);
+							am.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK);
 							m.start();
 						}
 					});
