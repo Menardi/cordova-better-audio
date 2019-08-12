@@ -1,0 +1,16 @@
+{
+  "name": "cordova-better-audio",
+  "version": "1.0.0",
+  "description": "This is a simple plugin which improves how audio works in Cordova apps on Android. Currently its only purpose is to allow ducking of background music (i.e. lowering its volume so your audio is more audible).",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Menardi/cordova-better-audio.git"
+  },
+  "author": "Menardi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Menardi/cordova-better-audio/issues"
+  },
+  "homepage": "https://github.com/Menardi/cordova-better-audio#readme"
+}
