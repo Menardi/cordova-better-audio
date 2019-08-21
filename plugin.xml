@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-           id="com.syncostyle.cordova.betteraudio.BetterAudio"
+           id="cordova-better-audio"
       version="0.0.1">
 
     <name>Better Audio</name>
