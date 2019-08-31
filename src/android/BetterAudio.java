@@ -32,10 +32,24 @@ public class BetterAudio extends CordovaPlugin {
 
 					MediaPlayer mp = new MediaPlayer();
 
+					AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+						@Override
+						public void onAudioFocusChange(int focusChange) {
+							switch (focusChange) {
+								case AudioManager.AUDIOFOCUS_LOSS:
+								case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+								case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+									mp.stop();
+									break;
+							}
+						}
+					};
+
+					AudioManager am = (AudioManager)BetterAudio.this.context.getSystemService("audio");
+					am.requestAudioFocus(audioFocusChangeListener, AudioManager.STREAM_NOTIFICATION, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK);
+
 					mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
 						public void onPrepared(MediaPlayer m) {
-							AudioManager am = (AudioManager)BetterAudio.this.context.getSystemService("audio");
-							am.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK);
 							m.start();
 						}
 					});
@@ -43,7 +57,7 @@ public class BetterAudio extends CordovaPlugin {
 					mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
 						public void onCompletion(MediaPlayer m) {
 							AudioManager a = (AudioManager)BetterAudio.this.context.getSystemService("audio");
-							a.abandonAudioFocus(null);
+							a.abandonAudioFocus(audioFocusChangeListener);
 							m.release();
 						}
 					});
@@ -52,7 +66,7 @@ public class BetterAudio extends CordovaPlugin {
 						public boolean onError(MediaPlayer m, int errorCode, int more) {
 							m.stop();
 							AudioManager a = (AudioManager)BetterAudio.this.context.getSystemService("audio");
-							a.abandonAudioFocus(null);
+							a.abandonAudioFocus(audioFocusChangeListener);
 							Log.v("BetterAudio", "Uh oh: " + errorCode + " / " + more);
 							return false;
 						}
@@ -64,6 +78,7 @@ public class BetterAudio extends CordovaPlugin {
 						mp.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
 						mp.prepare();
 					} catch (Exception e) {
+						am.abandonAudioFocus(audioFocusChangeListener);
 						callbackContext.error(e.getLocalizedMessage());
 					}
 				}
